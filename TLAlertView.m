@@ -413,7 +413,7 @@ static const CGFloat separatorEachEle   = 10.0f;
                                                   alpha:1.0f]];
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button setTitle:self.buttonTitle forState:UIControlStateNormal];
-    button.titleLabel.font = [UIFont boldSystemFontOfSize:button.titleLabel.font.pointSize];
+    button.titleLabel.font = [UIFont systemFontOfSize:button.titleLabel.font.pointSize];
     [button setBackgroundColor:[UIColor whiteColor]];
     button.tag = 0;
     button.frame = CGRectMake(
