@@ -12,6 +12,7 @@
 @class TLAlertView;
 
 typedef void(^TLAlertViewHandler)(TLAlertView *alertView);
+typedef void(^TLAlertViewHandlerButtonIndex)(int buttonIndex);
 
 @interface TLAlertView : UIView
 
@@ -23,6 +24,11 @@ typedef void(^TLAlertViewHandler)(TLAlertView *alertView);
 -(instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitle:(NSString *)buttonTitle;
 -(instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitle:(NSString *)buttonTitle outsideClose: (BOOL)tap2close;
 -(instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitle:(NSString *)buttonTitle handler:(TLAlertViewHandler)handler;
+- (id)initWithTitle:(NSString *)title
+            message:(NSString *)message
+    leftButtonTitle:(NSString *)leftButtonTitle
+   rightButtonTitle:(NSString *)rightButtonTitle
+            handler:(TLAlertViewHandlerButtonIndex)handler;
 -(instancetype)initWithView:(UIView *)view;
 -(instancetype)initWithView:(UIView *)view outsideClose: (BOOL)tap2close;
 -(instancetype)initWithView:(UIView *)view handler:(TLAlertViewHandler)handler;

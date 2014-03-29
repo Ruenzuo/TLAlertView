@@ -19,9 +19,11 @@ static const CGFloat separatorEachEle   = 10.0f;
 @property (nonatomic, strong) NSString  *title;
 @property (nonatomic, strong) NSString  *message;
 @property (nonatomic, strong) NSString  *buttonTitle;
+@property (nonatomic, strong) NSString  *rightRuttonTitle;
 @property (nonatomic, strong) UIView    *customAlertView;
 
 @property (nonatomic, copy) TLAlertViewHandler handler;
+@property (nonatomic, copy) TLAlertViewHandlerButtonIndex buttonIndexHandler;
 @property (nonatomic, strong) TLAlertView *retainedSelf;
 
 @property (nonatomic, strong) UIView *backgroundView;
@@ -58,6 +60,23 @@ static const CGFloat separatorEachEle   = 10.0f;
     
     [self setup];
     
+    return self;
+}
+
+- (id)initWithTitle:(NSString *)title
+            message:(NSString *)message
+    leftButtonTitle:(NSString *)leftButtonTitle
+   rightButtonTitle:(NSString *)rightButtonTitle
+            handler:(TLAlertViewHandlerButtonIndex)handler
+{
+    if (self = [super init]) {
+        [self setTitle:title];
+        [self setMessage:message];
+        [self setButtonTitle:leftButtonTitle];
+        [self setRightRuttonTitle:rightButtonTitle];
+        [self setButtonIndexHandler:handler];
+        [self setup];
+    }
     return self;
 }
 
@@ -186,7 +205,12 @@ static const CGFloat separatorEachEle   = 10.0f;
     self.alertView.center = CGPointMake(CGRectGetMidX(keyWindow.bounds), - CGRectGetMaxY(self.alertView.bounds));
     
     // Add Button
-    [self.innerView addSubview:[self returnUIForButton]];
+    if ([self rightRuttonTitle]) {
+        [self.innerView addSubview:[self returnUIForButtons]];
+    }
+    else {
+        [self.innerView addSubview:[self returnUIForButton]];
+    }
     
     // Add layer to AlertView
     [self.alertView.layer addSublayer:[self subLayerLine]];
@@ -256,6 +280,40 @@ static const CGFloat separatorEachEle   = 10.0f;
     // Call our completion handler
     if (self.handler) {
         self.handler(self);
+    }
+}
+
+-(void)dismiss:(id)sender {
+    // Assume that the view is currently in the center of the screen. Add some gravity to make it disappear.
+    // It *should* disappear before the animation fading away the background completes.
+    UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
+    
+    [self.animator removeAllBehaviors];
+    
+    UIGravityBehavior *gravityBehaviour = [[UIGravityBehavior alloc] initWithItems:@[self.alertView]];
+    gravityBehaviour.gravityDirection = CGVectorMake(0.0f, 10.0f);
+    [self.animator addBehavior:gravityBehaviour];
+    
+    UIDynamicItemBehavior *itemBehaviour = [[UIDynamicItemBehavior alloc] initWithItems:@[self.alertView]];
+    [itemBehaviour addAngularVelocity:-M_PI_2 forItem:self.alertView];
+    [self.animator addBehavior:itemBehaviour];
+    
+    // Animate out our background blind
+    [UIView animateWithDuration:animationDuration animations:^{
+        self.backgroundView.alpha = 0.0f;
+        keyWindow.tintAdjustmentMode = UIViewTintAdjustmentModeAutomatic;
+        [keyWindow tintColorDidChange];
+    } completion:^(BOOL finished) {
+        [self removeFromSuperview];
+        // Very important!
+        self.retainedSelf = nil;
+    }];
+    
+    UIButton *button = (UIButton *)sender;
+    
+    // Call our completion handler
+    if (self.buttonIndexHandler) {
+        self.buttonIndexHandler(button.tag);
     }
 }
 
@@ -339,6 +397,45 @@ static const CGFloat separatorEachEle   = 10.0f;
                               44.0f);
     [button addTarget:self action:@selector(dismiss) forControlEvents:UIControlEventTouchUpInside];
     return button;
+}
+
+- (UIView *)returnUIForButtons
+{
+    CGRect lastFrame = [self frameForLastSettedView];
+    UIView *vwButtons = [[UIView alloc] initWithFrame:CGRectMake(
+                                                                 0 - marginInnerView,
+                                                                 lastFrame.origin.y + lastFrame.size.height + separatorEachEle,
+                                                                 alertViewWidth,
+                                                                 44.0f)];
+    [vwButtons setBackgroundColor:[UIColor colorWithRed:171.0f/255.0f
+                                                  green:171.0f/255.0f
+                                                   blue:171.0f/255.0f
+                                                  alpha:1.0f]];
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button setTitle:self.buttonTitle forState:UIControlStateNormal];
+    button.titleLabel.font = [UIFont boldSystemFontOfSize:button.titleLabel.font.pointSize];
+    [button setBackgroundColor:[UIColor whiteColor]];
+    button.tag = 0;
+    button.frame = CGRectMake(
+                              0,
+                              0,
+                              alertViewWidth / 2 - 0.5,
+                              44.0f);
+    [button addTarget:self action:@selector(dismiss:) forControlEvents:UIControlEventTouchUpInside];
+    UIButton *button2 = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button2 setTitle:self.rightRuttonTitle forState:UIControlStateNormal];
+    button2.titleLabel.font = [UIFont boldSystemFontOfSize:button.titleLabel.font.pointSize];
+    [button2 setBackgroundColor:[UIColor whiteColor]];
+    button.tag = 1;
+    button2.frame = CGRectMake(
+                               alertViewWidth / 2,
+                               0,
+                               alertViewWidth / 2,
+                               44.0f);
+    [button2 addTarget:self action:@selector(dismiss:) forControlEvents:UIControlEventTouchUpInside];
+    [vwButtons addSubview:button];
+    [vwButtons addSubview:button2];
+    return vwButtons;
 }
 
 - (CGRect )adjustLabelFrame: (UILabel *)label
